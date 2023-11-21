@@ -9,43 +9,50 @@ services:
       MARIADB_ROOT_PASSWORD: example
     volumes:
       - ./docker/init:/docker-entrypoint-initdb.d
+    networks:
+      - backend
 
   adminer:
     image: adminer
     restart: always
     ports:
       - 8081:8080
+    networks:
+      - backend
 
   nextjs:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./FrontEnd
     ports:
       - 3001:3000
     volumes:
       - ./FrontEnd:/app
     command: npm run dev
+    networks:
+      - backend
 
   ginserver:
     build:
-      context: .
-      dockerfile: Dockerfile2
+      context: ./BackEnd
     ports:
       - 5000:5000
     volumes:
       - ./BackEnd:/app
     command: bash /app/Start.sh
-    links:
-      - db
+    networks:
+      - backend
 
   web:
     image: nginx
     volumes:
-      - ./docker/init/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
     ports:
       - "80:80"
     environment:
       - NGINX_PORT=80
-    links:
-      - "nextjs"
-      - "ginserver"
+    networks:
+      - backend
+networks:
+  backend:
+    driver: bridge
+      - backend
